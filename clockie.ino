@@ -1,6 +1,9 @@
 #include <LiquidCrystal.h>
 #include <Time.h>
 
+#define DISPLAY_BUTTON_PIN 2
+#define LCD_LIGHT_PIN      6
+
 unsigned int showCounter = 0;
 unsigned int lastSecond  = 60;
 
@@ -28,9 +31,19 @@ void renderTime() {
   lcd.print(sec);
 }
 
-void showTime() {
-  lcd.display();
+void turnOnDisplay() {
   renderTime();
+  lcd.display();
+  digitalWrite(LCD_LIGHT_PIN, HIGH);
+}
+
+void turnOffDisplay() {
+  digitalWrite(LCD_LIGHT_PIN, LOW);
+  lcd.noDisplay();
+}
+
+void showTime() {
+  turnOnDisplay();
   showCounter = 5;
 }
 
@@ -42,7 +55,7 @@ void loop() {
       showCounter--;
       renderTime();
       if (showCounter < 1) {
-        lcd.noDisplay();
+        turnOffDisplay();
       }
     }
   }
@@ -56,6 +69,12 @@ void setup() {
 
   lcd.noDisplay();
 
-  pinMode(2, INPUT_PULLUP);
+  pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP);
   attachInterrupt(0, showTime, FALLING);
+
+  // Set the LCD display backlight pin as an output.
+  pinMode(LCD_LIGHT_PIN, OUTPUT);
+
+  // Turn off the LCD backlight.
+  digitalWrite(LCD_LIGHT_PIN, LOW);
 }
