@@ -121,6 +121,8 @@ void initCC3000() {
 }
 
 void queryTime() {
+  String line = "";
+
   lcd.clear();
   lcd.print("Querying..");
 
@@ -136,15 +138,14 @@ void queryTime() {
     return;
   }
 
-  lcd.clear();
   /* Read data until either the connection is closed, or the idle timeout is reached. */
-  String line = "";
   unsigned long lastRead = millis();
   while (www.connected() && (millis() - lastRead < IDLE_TIMEOUT_MS)) {
     while (www.available()) {
       char c = www.read();
       if (c == '\n') {
         if (line.startsWith("Date:")) {
+          lcd.clear();
           lcd.print(line);
         }
         line = "";
