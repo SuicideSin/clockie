@@ -4,12 +4,13 @@
 #include <string.h>
 #include <LiquidCrystal.h>
 #include <Time.h>
-#include "wifi_creds.h"
 
 #define DISPLAY_BUTTON_PIN 2
 #define LCD_LIGHT_PIN      6
 
 #define IDLE_TIMEOUT_MS  3000      // Amount of time to wait (in milliseconds) with no data
+
+#define DEVICE_NAME "CC3000"
 
 // These are the interrupt and control pins
 #define ADAFRUIT_CC3000_IRQ   2  // MUST be an interrupt pin!
@@ -19,7 +20,7 @@
 // Use hardware SPI for the remaining pins
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,
-                                         SPI_CLOCK_DIVIDER); // you can change this clock speed
+                                         SPI_CLOCK_DIV4); // you can change this clock speed
 
 unsigned int showCounter = 0;
 unsigned int lastSecond  = 60;
@@ -83,16 +84,10 @@ void loop() {
 
 void initCC3000() {
   lcd.clear();
-  if (!cc3000.begin()) {
+  lcd.print("Connecting...");
+  if (!cc3000.begin(false, true, DEVICE_NAME)) {
     lcd.setCursor(0, 1);
     lcd.print("Couldn't begin()");
-    while(1);
-  }
-
-  lcd.print("Connecting...");
-  if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
-    lcd.setCursor(0, 1);
-    lcd.print("Failed!");
     while(1);
   }
 
@@ -152,10 +147,12 @@ void queryTime() {
       } else {
         line += c;
       }
+      Serial.print(c);
       lastRead = millis();
     }
   }
   www.close();
+  Serial.println("");
 
   /* You need to make sure to clean up after yourself or the CC3000 can freak out */
   /* the next time your try to connect ... */
@@ -163,13 +160,16 @@ void queryTime() {
 }
 
 void setup() {
+  Serial.begin(115200);
+  Serial.println(F("Hello, CC3000!\n"));
+
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
 
   lcd.noDisplay();
 
-  pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(0, showTime, FALLING);
+  /* pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP); */
+  /* attachInterrupt(0, showTime, FALLING); */
 
   // Set the LCD display backlight pin as an output.
   pinMode(LCD_LIGHT_PIN, OUTPUT);
