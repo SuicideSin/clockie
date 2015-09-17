@@ -2,7 +2,14 @@
 
 ARDMK_DIR = /usr/local/opt/arduino-mk
 
-# BOARDS_TXT = /Applications/Arduino.app/Contents/Resources/Java/hardware/Microduino/boards.txt
-# BOARD_TAG = 328p8m
+# if you have placed the alternate core in your sketchbook directory, then you can just mention the core name alone.
+ALTERNATE_CORE = attiny
+# If not, you might have to include the full path.
+# ALTERNATE_CORE_PATH = /Users/doug/Documents/Arduino/hardware/attiny
+
+BOARD_TAG = attiny84-8
+ISP_PROG = usbtiny
 
 include $(ARDMK_DIR)/Arduino.mk
+
+# !!! Important. You have to use make ispload to upload when using ISP programmer
