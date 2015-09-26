@@ -1,15 +1,28 @@
+#define F_CPU 32768 // 32.768 KHz clock
+
+/* long unsigned int millis() { return 0; } */
+
 #include <LiquidCrystal.h>
 #include <Time.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/sleep.h>
 
 #define DISPLAY_BUTTON_PIN 2
 #define LCD_LIGHT_PIN      6
+
+#ifndef cbi
+#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+#endif
+#ifndef sbi
+#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+#endif
 
 unsigned int showCounter = 0;
 unsigned int lastSecond  = 60;
 
 // initialize the library with the numbers of the interface pins
-//                A0  A1  A2  A3  A4  A5
-LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
+LiquidCrystal lcd(0, 1, 2, 3, 4, 7);
 
 void renderTime() {
   unsigned int hr  = hour();
@@ -35,11 +48,11 @@ void renderTime() {
 void turnOnDisplay() {
   renderTime();
   lcd.display();
-  digitalWrite(LCD_LIGHT_PIN, HIGH);
+  /* digitalWrite(LCD_LIGHT_PIN, HIGH); */
 }
 
 void turnOffDisplay() {
-  digitalWrite(LCD_LIGHT_PIN, LOW);
+  /* digitalWrite(LCD_LIGHT_PIN, LOW); */
   lcd.noDisplay();
 }
 
@@ -49,18 +62,10 @@ void showTime() {
 }
 
 void loop() {
-  /* if (showCounter > 0) { */
-    unsigned int sec = second();
-    if (sec != lastSecond) {
-      lastSecond = sec;
-      showCounter--;
-      renderTime();
-      /* if (showCounter < 1) { */
-      /*   turnOffDisplay(); */
-      /* } */
-    }
-  /* } */
+  set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
+  sleep_mode(); // System sleeps here
 }
+
 
 void setup() {
   // set up the LCD's number of columns and rows:
@@ -72,10 +77,26 @@ void setup() {
   /* attachInterrupt(0, showTime, FALLING); */
 
   // Set the LCD display backlight pin as an output.
-  pinMode(LCD_LIGHT_PIN, OUTPUT);
+  /* pinMode(LCD_LIGHT_PIN, OUTPUT); */
 
   // Turn off the LCD backlight.
-  digitalWrite(LCD_LIGHT_PIN, LOW);
+  /* digitalWrite(LCD_LIGHT_PIN, LOW); */
 
   turnOnDisplay();
+
+  sei(); // Turn on interrupts
+
+  // Set prescaler to 128 to give exactly 1 second before an overflow occurs.
+  // 128 prescaler x 256 timer bits / 32768 clock = 1 second
+  sbi(CLKPR, CLKPCE);
+  CLKPR = (0 << CLKPCE) | _BV(CLKPS2) | _BV(CLKPS1) | _BV(CLKPS0);
+
+  // Enable timer 1 overflow interrupt
+  sbi(TIMSK0, TOIE0);
+}
+
+// Timer 1 interrupt
+ISR(TIM0_OVF_vect) {
+  adjustTime(1);
+  renderTime();
 }
