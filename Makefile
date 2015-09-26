@@ -11,6 +11,8 @@ ALTERNATE_CORE_PATH = /Users/doug/Documents/Arduino/hardware/attiny
 BOARD_TAG = attiny84
 ISP_PROG = usbtiny
 
+AVRDUDE_OPTS = -q -V -B 250
+
 include $(ARDMK_DIR)/Arduino.mk
 
 # !!! Important. You have to use make ispload to upload when using ISP programmer
