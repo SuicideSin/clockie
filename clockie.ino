@@ -1,7 +1,5 @@
 #define F_CPU 32768 // 32.768 KHz clock
 
-/* long unsigned int millis() { return 0; } */
-
 #include <LiquidCrystal.h>
 #include <Time.h>
 #include <avr/io.h>
@@ -21,13 +19,15 @@
 unsigned int showCounter = 0;
 unsigned int lastSecond  = 60;
 
+volatile time_t time = 0;
+
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(0, 1, 2, 3, 4, 7);
 
 void renderTime() {
-  unsigned int hr  = hour();
-  unsigned int min = minute();
-  unsigned int sec = second();
+  unsigned int hr  = hour(time);
+  unsigned int min = minute(time);
+  unsigned int sec = second(time);
   lcd.setCursor(0, 1);
   if (hr < 10) {
     lcd.print(0);
@@ -86,17 +86,27 @@ void setup() {
 
   sei(); // Turn on interrupts
 
-  // Set prescaler to 128 to give exactly 1 second before an overflow occurs.
-  // 128 prescaler x 256 timer bits / 32768 clock = 1 second
-  sbi(CLKPR, CLKPCE);
-  CLKPR = (0 << CLKPCE) | _BV(CLKPS2) | _BV(CLKPS1) | _BV(CLKPS0);
+  // set the 1x timer prescaler
+  cbi(TCCR1B, CS12);
+  cbi(TCCR1B, CS11);
+  sbi(TCCR1B, CS10);
 
-  // Enable timer 1 overflow interrupt
-  sbi(TIMSK0, TOIE0);
+  // Turn off PWM mode for Timer1
+  cbi(TCCR1B, WGM13);
+  sbi(TCCR1B, WGM12);
+  cbi(TCCR1A, WGM11);
+  cbi(TCCR1A, WGM10);
+
+  // Trigger when Timer 1 hits 32768 (2^15), our clock speed.
+  OCR1AH = 0x80;
+  OCR1AL = 0x00;
+
+  // Enable Timer 1 compare interrupt
+  sbi(TIMSK1, OCIE1A);
 }
 
 // Timer 1 interrupt
-ISR(TIM0_OVF_vect) {
-  adjustTime(1);
+ISR(TIM1_COMPA_vect) {
+  time++;
   renderTime();
 }
