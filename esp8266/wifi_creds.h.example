@@ -1,0 +1,3 @@
+// WiFi network (change with your settings !)
+#define WLAN_SSID "YOUR SSID"
+#define WLAN_PASS "YOUR PASSWORD"
