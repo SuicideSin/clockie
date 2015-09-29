@@ -17,7 +17,6 @@
 #endif
 
 unsigned int showCounter = 0;
-unsigned int lastSecond  = 60;
 
 volatile time_t time = 0;
 
