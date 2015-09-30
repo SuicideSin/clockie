@@ -5,6 +5,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <tinySPI.h>
 
 #define DISPLAY_BUTTON_PIN 2
 #define LCD_LIGHT_PIN      6
@@ -21,7 +22,7 @@ unsigned int showCounter = 0;
 volatile time_t time = 0;
 
 // initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(0, 1, 2, 3, 4, 7);
+LiquidCrystal lcd(0, 1, 2, 3, 7, 8);
 
 void renderTime() {
   unsigned int hr  = hour(time);
@@ -63,8 +64,12 @@ void showTime() {
 void loop() {
   set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
   sleep_mode(); // System sleeps here
+  char received = SPI.transfer(0);
+  if (received > 0) {
+    lcd.setCursor(0, 0);
+    lcd.print(received);
+  }
 }
-
 
 void setup() {
   // set up the LCD's number of columns and rows:
@@ -102,6 +107,9 @@ void setup() {
 
   // Enable Timer 1 compare interrupt
   sbi(TIMSK1, OCIE1A);
+
+  // start hardware SPI
+  SPI.begin();
 }
 
 // Timer 1 interrupt
