@@ -22,7 +22,7 @@ unsigned int showCounter = 0;
 volatile time_t time = 0;
 
 // initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(0, 1, 2, 3, 7, 8);
+LiquidCrystal lcd(0, 1, 2, 3, 4, 7);
 
 void renderTime() {
   unsigned int hr  = hour(time);
