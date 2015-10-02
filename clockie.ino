@@ -5,10 +5,12 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
-#include <tinySPI.h>
 
 #define DISPLAY_BUTTON_PIN 2
 #define LCD_LIGHT_PIN      6
+
+#define CLOCK_PIN 8
+#define DATA_PIN  6
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -19,6 +21,7 @@
 
 unsigned int showCounter = 0;
 
+volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
 
 // initialize the library with the numbers of the interface pins
@@ -64,11 +67,6 @@ void showTime() {
 void loop() {
   set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
   sleep_mode(); // System sleeps here
-  char received = SPI.transfer(0);
-  if (received > 0) {
-    lcd.setCursor(0, 0);
-    lcd.print(received);
-  }
 }
 
 void setup() {
@@ -85,6 +83,16 @@ void setup() {
 
   // Turn off the LCD backlight.
   /* digitalWrite(LCD_LIGHT_PIN, LOW); */
+
+  // turn 6 & 8 into inputs for the esp8266
+  pinMode(CLOCK_PIN, INPUT_PULLUP);
+  pinMode(DATA_PIN,  INPUT_PULLUP);
+
+  // listen to pin changes on pin 8
+  sbi(PCMSK1, PCINT8);
+
+  // Enable PCINT interrupts 8-11
+  sbi(GIMSK, PCIE1);
 
   turnOnDisplay();
 
@@ -107,13 +115,23 @@ void setup() {
 
   // Enable Timer 1 compare interrupt
   sbi(TIMSK1, OCIE1A);
-
-  // start hardware SPI
-  SPI.begin();
 }
 
 // Timer 1 interrupt
 ISR(TIM1_COMPA_vect) {
   time++;
   renderTime();
+}
+
+unsigned int clockCount = 0;
+// clock pin
+ISR(PCINT1_vect) {
+  // only read when the clock is high
+  if (digitalRead(CLOCK_PIN) == HIGH) {
+    clockCount++;
+    lastSetTime = (lastSetTime >> 1) | digitalRead(DATA_PIN) << 31;
+    if (clockCount == 32) {
+      setTime(lastSetTime);
+    }
+  }
 }

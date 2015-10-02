@@ -2,6 +2,9 @@
 #include <WiFiUdp.h>
 #include "wifi_creds.h"
 
+#define CLOCK_PIN 0
+#define DATA_PIN  1
+
 unsigned int localPort = 2390;      // local port to listen for UDP packets
 
 /* Don't hardwire the IP address or we won't get the benefits of the pool.
@@ -17,6 +20,9 @@ byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packe
 WiFiUDP udp;
 
 void setup() {
+  // make sure the clock pin is low
+  digitalWrite(CLOCK_PIN, LOW);
+
   Serial.begin(115200);
   Serial.println();
   Serial.println();
@@ -41,11 +47,26 @@ void setup() {
   Serial.print("Local port: ");
   Serial.println(udp.localPort());
 
-  getTime();
+  unsigned long time = getTime();
+
+  slowShiftOut(time);
 }
 
 void loop() {
   // noop
+}
+
+void slowShiftOut(uint8_t val) {
+  uint8_t i;
+
+  for (i = 0; i < 32; i++)  {
+    digitalWrite(DATA_PIN, !!(val & (1 << i)));
+
+    digitalWrite(CLOCK_PIN, HIGH);
+    delay(1);
+    digitalWrite(CLOCK_PIN, LOW);
+    delay(1);
+  }
 }
 
 unsigned long getTime() {
@@ -103,6 +124,8 @@ unsigned long getTime() {
     Serial.print('0');
   }
   Serial.println(epoch % 60); // print the second
+
+  return epoch;
 }
 
 // send an NTP request to the time server at the given address
