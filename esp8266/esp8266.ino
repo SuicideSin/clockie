@@ -20,6 +20,9 @@ byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packe
 WiFiUDP udp;
 
 void setup() {
+  pinMode(CLOCK_PIN, OUTPUT);
+  pinMode(DATA_PIN,  OUTPUT);
+
   // make sure the clock pin is low
   digitalWrite(CLOCK_PIN, LOW);
 

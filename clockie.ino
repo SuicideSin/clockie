@@ -85,8 +85,8 @@ void setup() {
   /* digitalWrite(LCD_LIGHT_PIN, LOW); */
 
   // turn 6 & 8 into inputs for the esp8266
-  pinMode(CLOCK_PIN, INPUT_PULLUP);
-  pinMode(DATA_PIN,  INPUT_PULLUP);
+  pinMode(CLOCK_PIN, INPUT);
+  pinMode(DATA_PIN,  INPUT);
 
   // listen to pin changes on pin 8
   sbi(PCMSK1, PCINT8);
@@ -129,9 +129,11 @@ ISR(PCINT1_vect) {
   // only read when the clock is high
   if (digitalRead(CLOCK_PIN) == HIGH) {
     clockCount++;
-    lastSetTime = (lastSetTime >> 1) | digitalRead(DATA_PIN) << 31;
+    lastSetTime = (lastSetTime >> 1) | (unsigned long)(digitalRead(DATA_PIN)) << 31;
     if (clockCount == 32) {
       setTime(lastSetTime);
     }
+    lcd.setCursor(0, 0);
+    lcd.print(lastSetTime);
   }
 }
