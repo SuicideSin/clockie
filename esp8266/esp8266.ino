@@ -52,6 +52,8 @@ void setup() {
 
   unsigned long time = getTime();
 
+  WiFi.mode(WIFI_OFF);
+
   slowShiftOut(time);
 }
 
@@ -66,9 +68,9 @@ void slowShiftOut(uint8_t val) {
     digitalWrite(DATA_PIN, !!(val & (1 << i)));
 
     digitalWrite(CLOCK_PIN, HIGH);
-    delay(1);
+    delay(25);
     digitalWrite(CLOCK_PIN, LOW);
-    delay(1);
+    delay(25);
   }
 }
 

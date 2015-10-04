@@ -21,6 +21,7 @@
 
 unsigned int showCounter = 0;
 
+volatile unsigned int clockPinCount = 0;
 volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
 
@@ -88,8 +89,8 @@ void setup() {
   pinMode(CLOCK_PIN, INPUT);
   pinMode(DATA_PIN,  INPUT);
 
-  // listen to pin changes on pin 8
-  sbi(PCMSK1, PCINT8);
+  // listen to pin changes on pin 8 (PCINT10)
+  sbi(PCMSK1, PCINT10);
 
   // Enable PCINT interrupts 8-11
   sbi(GIMSK, PCIE1);
@@ -119,21 +120,29 @@ void setup() {
 
 // Timer 1 interrupt
 ISR(TIM1_COMPA_vect) {
-  time++;
-  renderTime();
+  if (clockPinCount == 0) {
+    time++;
+    renderTime();
+  }
 }
 
-unsigned int clockCount = 0;
 // clock pin
 ISR(PCINT1_vect) {
   // only read when the clock is high
   if (digitalRead(CLOCK_PIN) == HIGH) {
-    clockCount++;
-    lastSetTime = (lastSetTime >> 1) | (unsigned long)(digitalRead(DATA_PIN)) << 31;
-    if (clockCount == 32) {
-      setTime(lastSetTime);
+    if (clockPinCount == 0) {
+      lastSetTime = 0;
     }
-    lcd.setCursor(0, 0);
-    lcd.print(lastSetTime);
+    lastSetTime |= (unsigned long)(digitalRead(DATA_PIN)) << clockPinCount;
+    clockPinCount++;
+    if (clockPinCount == 32) {
+      lcd.setCursor(0, 0);
+      lcd.print(lastSetTime);
+      setTime(lastSetTime);
+      clockPinCount = 0;
+    } else {
+      lcd.setCursor(0, 0);
+      lcd.print(clockPinCount);
+    }
   }
 }
