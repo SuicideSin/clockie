@@ -67,6 +67,20 @@ void showTime() {
   showCounter = 5;
 }
 
+bool isDST() {
+  int mo = month(time);
+  //January, february, and december are out.
+  if (mo < 3 || mo > 11) { return false; }
+  //April to October are in
+  if (mo > 3 && mo < 11) { return true; }
+  int prevSun = day(previousSunday(time));
+  //In march, we are DST if our previous sunday was on or after the 8th.
+  if (mo == 3) { return prevSun >= 8; }
+  //In november we must be before the first sunday to be dst.
+  //That means the previous sunday must be before the 1st.
+  return prevSun <= 0;
+}
+
 void loop() {
   set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
   sleep_mode(); // System sleeps here
