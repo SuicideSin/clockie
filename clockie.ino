@@ -21,7 +21,9 @@
 
 unsigned int showCounter = 0;
 
+volatile unsigned int lastClockPinCount = 0;
 volatile unsigned int clockPinCount = 0;
+volatile time_t lastTogglePin = 0;
 volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
 
@@ -68,6 +70,24 @@ void showTime() {
 void loop() {
   set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
   sleep_mode(); // System sleeps here
+  if (lastClockPinCount != clockPinCount) {
+    lastClockPinCount = clockPinCount;
+  } else {
+    renderTime();
+  }
+  // clear the clock pin counter
+  if (lastTogglePin > 0 && lastTogglePin < time-2) {
+    lastTogglePin = 0;
+    lcd.setCursor(0, 0);
+    if (clockPinCount == 0) {
+      lcd.print("S");
+      lcd.print(lastSetTime);
+    } else {
+      lcd.print(clockPinCount);
+    }
+    lcd.print("          ");
+    clockPinCount = 0;
+  }
 }
 
 void setup() {
@@ -86,8 +106,8 @@ void setup() {
   /* digitalWrite(LCD_LIGHT_PIN, LOW); */
 
   // turn 6 & 8 into inputs for the esp8266
-  pinMode(CLOCK_PIN, INPUT);
-  pinMode(DATA_PIN,  INPUT);
+  pinMode(CLOCK_PIN, INPUT_PULLUP);
+  pinMode(DATA_PIN,  INPUT_PULLUP);
 
   // listen to pin changes on pin 8 (PCINT10)
   sbi(PCMSK1, PCINT10);
@@ -120,29 +140,22 @@ void setup() {
 
 // Timer 1 interrupt
 ISR(TIM1_COMPA_vect) {
-  if (clockPinCount == 0) {
-    time++;
-    renderTime();
-  }
+  time++;
 }
 
 // clock pin
 ISR(PCINT1_vect) {
   // only read when the clock is high
   if (digitalRead(CLOCK_PIN) == HIGH) {
+    lastTogglePin = time;
     if (clockPinCount == 0) {
       lastSetTime = 0;
     }
     lastSetTime |= (unsigned long)(digitalRead(DATA_PIN)) << clockPinCount;
     clockPinCount++;
     if (clockPinCount == 32) {
-      lcd.setCursor(0, 0);
-      lcd.print(lastSetTime);
-      setTime(lastSetTime);
+      time = lastSetTime;
       clockPinCount = 0;
-    } else {
-      lcd.setCursor(0, 0);
-      lcd.print(clockPinCount);
     }
   }
 }

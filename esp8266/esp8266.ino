@@ -2,8 +2,8 @@
 #include <WiFiUdp.h>
 #include "wifi_creds.h"
 
-#define CLOCK_PIN 0
-#define DATA_PIN  1
+#define CLOCK_PIN 2
+#define DATA_PIN  0
 
 unsigned int localPort = 2390;      // local port to listen for UDP packets
 
@@ -61,16 +61,16 @@ void loop() {
   // noop
 }
 
-void slowShiftOut(uint8_t val) {
+void slowShiftOut(uint32_t val) {
   uint8_t i;
 
   for (i = 0; i < 32; i++)  {
     digitalWrite(DATA_PIN, !!(val & (1 << i)));
 
     digitalWrite(CLOCK_PIN, HIGH);
-    delay(25);
+    delay(10);
     digitalWrite(CLOCK_PIN, LOW);
-    delay(25);
+    delay(10);
   }
 }
 
