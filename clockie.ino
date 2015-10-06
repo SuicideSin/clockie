@@ -1,10 +1,10 @@
 #define F_CPU 32768 // 32.768 KHz clock
 
-#include <LiquidCrystal.h>
 #include <Time.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <LiquidCrystal_SR.h>
 
 #define DISPLAY_BUTTON_PIN 2
 #define LCD_LIGHT_PIN      6
@@ -28,7 +28,10 @@ volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
 
 // initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(0, 1, 2, 3, 4, 7);
+LiquidCrystal_SR lcd(0,1,TWO_WIRE);
+//                   | |
+//                   | \-- Clock Pin
+//                   \---- Data/Enable Pin
 
 void renderTime() {
   unsigned int hr  = hour(time);
