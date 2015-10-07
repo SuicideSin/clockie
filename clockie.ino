@@ -8,6 +8,7 @@
 
 #define DISPLAY_BUTTON_PIN 2
 #define LCD_LIGHT_PIN      2
+#define WIFI_ENABLE_PIN    3
 
 #define CLOCK_PIN 8
 #define DATA_PIN  7
@@ -108,19 +109,18 @@ void loop() {
 }
 
 void setup() {
-  // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
-
-  lcd.noDisplay();
-
-  /* pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP); */
-  /* attachInterrupt(0, showTime, FALLING); */
-
-  // Set the LCD display backlight pin as an output.
-  pinMode(LCD_LIGHT_PIN, OUTPUT);
+  // Set the LCD display backlight and WiFi Enable pins as outputs.
+  pinMode(LCD_LIGHT_PIN,   OUTPUT);
+  pinMode(WIFI_ENABLE_PIN, OUTPUT);
 
   // Turn off the LCD backlight.
   digitalWrite(LCD_LIGHT_PIN, LOW);
+
+  // Turn off WiFi.
+  digitalWrite(WIFI_ENABLE_PIN, LOW);
+
+  /* pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP); */
+  /* attachInterrupt(0, showTime, FALLING); */
 
   // turn 6 & 8 into inputs for the esp8266
   pinMode(CLOCK_PIN, INPUT_PULLUP);
@@ -131,6 +131,10 @@ void setup() {
 
   // Enable PCINT interrupts 8-11
   sbi(GIMSK, PCIE1);
+
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  lcd.noDisplay();
 
   turnOnDisplay();
 
@@ -153,6 +157,9 @@ void setup() {
 
   // Enable Timer 1 compare interrupt
   sbi(TIMSK1, OCIE1A);
+
+  // Now that we're starting up, turn on Wifi
+  digitalWrite(WIFI_ENABLE_PIN, HIGH);
 }
 
 // Timer 1 interrupt
@@ -173,6 +180,8 @@ ISR(PCINT1_vect) {
     if (clockPinCount == 32) {
       time = lastSetTime;
       clockPinCount = 0;
+      // we have our time, turn off wifi
+      digitalWrite(WIFI_ENABLE_PIN, LOW);
     }
   }
 }
