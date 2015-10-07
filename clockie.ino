@@ -10,7 +10,7 @@
 #define LCD_LIGHT_PIN      6
 
 #define CLOCK_PIN 8
-#define DATA_PIN  6
+#define DATA_PIN  7
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
