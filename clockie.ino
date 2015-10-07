@@ -7,7 +7,7 @@
 #include <LiquidCrystal_SR.h>
 
 #define DISPLAY_BUTTON_PIN 2
-#define LCD_LIGHT_PIN      6
+#define LCD_LIGHT_PIN      2
 
 #define CLOCK_PIN 8
 #define DATA_PIN  7
@@ -57,11 +57,11 @@ void renderTime() {
 void turnOnDisplay() {
   renderTime();
   lcd.display();
-  /* digitalWrite(LCD_LIGHT_PIN, HIGH); */
+  digitalWrite(LCD_LIGHT_PIN, HIGH);
 }
 
 void turnOffDisplay() {
-  /* digitalWrite(LCD_LIGHT_PIN, LOW); */
+  digitalWrite(LCD_LIGHT_PIN, LOW);
   lcd.noDisplay();
 }
 
@@ -117,10 +117,10 @@ void setup() {
   /* attachInterrupt(0, showTime, FALLING); */
 
   // Set the LCD display backlight pin as an output.
-  /* pinMode(LCD_LIGHT_PIN, OUTPUT); */
+  pinMode(LCD_LIGHT_PIN, OUTPUT);
 
   // Turn off the LCD backlight.
-  /* digitalWrite(LCD_LIGHT_PIN, LOW); */
+  digitalWrite(LCD_LIGHT_PIN, LOW);
 
   // turn 6 & 8 into inputs for the esp8266
   pinMode(CLOCK_PIN, INPUT_PULLUP);
