@@ -6,7 +6,7 @@
 #include <avr/sleep.h>
 #include <LiquidCrystal_SR.h>
 
-#define DISPLAY_BUTTON_PIN 2
+#define DISPLAY_BUTTON_PIN 6
 #define LCD_LIGHT_PIN      2
 #define WIFI_ENABLE_PIN    3
 
@@ -27,6 +27,7 @@ volatile unsigned int clockPinCount = 0;
 volatile time_t lastTogglePin = 0;
 volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
+volatile bool displayOn = false;
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal_SR lcd(0,1,TWO_WIRE);
@@ -59,11 +60,13 @@ void turnOnDisplay() {
   renderTime();
   lcd.display();
   digitalWrite(LCD_LIGHT_PIN, HIGH);
+  displayOn = true;
 }
 
 void turnOffDisplay() {
   digitalWrite(LCD_LIGHT_PIN, LOW);
   lcd.noDisplay();
+  displayOn = false;
 }
 
 void showTime() {
@@ -90,7 +93,7 @@ void loop() {
   sleep_mode(); // System sleeps here
   if (lastClockPinCount != clockPinCount) {
     lastClockPinCount = clockPinCount;
-  } else {
+  } else if (displayOn) {
     renderTime();
   }
   // clear the clock pin counter
@@ -106,6 +109,12 @@ void loop() {
     lcd.print("          ");
     clockPinCount = 0;
   }
+  if (showCounter > 0) {
+    showCounter--;
+    if (showCounter == 0) {
+      turnOffDisplay();
+    }
+  }
 }
 
 void setup() {
@@ -119,16 +128,21 @@ void setup() {
   // Turn off WiFi.
   digitalWrite(WIFI_ENABLE_PIN, LOW);
 
-  /* pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP); */
-  /* attachInterrupt(0, showTime, FALLING); */
+  // turn the button into a pullup,
+  // will trigger when it goes low
+  pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP);
 
   // turn 6 & 8 into inputs for the esp8266
   pinMode(CLOCK_PIN, INPUT_PULLUP);
   pinMode(DATA_PIN,  INPUT_PULLUP);
 
+  // listen to pin changes on pin 6 (PCINT6)
+  sbi(PCMSK0, PCINT6);
   // listen to pin changes on pin 8 (PCINT10)
   sbi(PCMSK1, PCINT10);
 
+  // Enable PCINT interrupts 0-7
+  sbi(GIMSK, PCIE0);
   // Enable PCINT interrupts 8-11
   sbi(GIMSK, PCIE1);
 
@@ -165,6 +179,13 @@ void setup() {
 // Timer 1 interrupt
 ISR(TIM1_COMPA_vect) {
   time++;
+}
+
+// buttons
+ISR(PCINT0_vect) {
+  if (digitalRead(DISPLAY_BUTTON_PIN) == LOW) {
+    showTime();
+  }
 }
 
 // clock pin
