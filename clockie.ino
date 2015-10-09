@@ -7,6 +7,7 @@
 #include <LiquidCrystal_SR.h>
 
 #define DISPLAY_BUTTON_PIN 6
+#define SR_CLEAR_PIN       5
 #define LCD_LIGHT_PIN      2
 #define WIFI_ENABLE_PIN    3
 
@@ -57,15 +58,18 @@ void renderTime() {
 }
 
 void turnOnDisplay() {
+  digitalWrite(LCD_LIGHT_PIN, LOW);
+  // clear the shift register
+  digitalWrite(SR_CLEAR_PIN, LOW);
+  digitalWrite(SR_CLEAR_PIN, HIGH);
   renderTime();
   lcd.display();
-  digitalWrite(LCD_LIGHT_PIN, LOW);
   displayOn = true;
 }
 
 void turnOffDisplay() {
-  digitalWrite(LCD_LIGHT_PIN, HIGH);
   lcd.noDisplay();
+  digitalWrite(LCD_LIGHT_PIN, HIGH);
   displayOn = false;
 }
 
@@ -118,16 +122,22 @@ void loop() {
 }
 
 void setup() {
-  // Set the LCD display backlight and WiFi Enable pins as outputs.
+  // Set the LCD display backlight, WiFi Enable
+  // and Shift Register pins as outputs.
   pinMode(LCD_LIGHT_PIN,   OUTPUT);
   pinMode(WIFI_ENABLE_PIN, OUTPUT);
+  pinMode(SR_CLEAR_PIN,    OUTPUT);
 
-  // Turn off the LCD backlight.
+  // Turn on the LCD backlight.
   // (PNP Transistor)
-  digitalWrite(LCD_LIGHT_PIN, HIGH);
+  digitalWrite(LCD_LIGHT_PIN, LOW);
 
   // Turn off WiFi.
   digitalWrite(WIFI_ENABLE_PIN, LOW);
+
+  // Turn off Shift Register clear
+  // (Active LOW)
+  digitalWrite(SR_CLEAR_PIN, HIGH);
 
   // turn the button into a pullup,
   // will trigger when it goes low
