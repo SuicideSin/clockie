@@ -73,11 +73,6 @@ void turnOffDisplay() {
   displayOn = false;
 }
 
-void showTime() {
-  turnOnDisplay();
-  showCounter = 5;
-}
-
 bool isDST() {
   int mo = month(time);
   //January, february, and december are out.
@@ -95,6 +90,14 @@ bool isDST() {
 void loop() {
   set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
   sleep_mode(); // System sleeps here
+  if (showCounter > 0) {
+    showCounter--;
+    if (showCounter == 0) {
+      turnOffDisplay();
+    } else if (!displayOn) {
+      turnOnDisplay();
+    }
+  }
   if (lastClockPinCount != clockPinCount) {
     lastClockPinCount = clockPinCount;
   } else if (displayOn) {
@@ -112,12 +115,6 @@ void loop() {
     }
     lcd.print("          ");
     clockPinCount = 0;
-  }
-  if (showCounter > 0) {
-    showCounter--;
-    if (showCounter == 0) {
-      turnOffDisplay();
-    }
   }
 }
 
@@ -195,7 +192,7 @@ ISR(TIM1_COMPA_vect) {
 // buttons
 ISR(PCINT0_vect) {
   if (digitalRead(DISPLAY_BUTTON_PIN) == LOW) {
-    showTime();
+    showCounter = 5;
   }
 }
 
