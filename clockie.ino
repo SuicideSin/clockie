@@ -59,12 +59,12 @@ void renderTime() {
 void turnOnDisplay() {
   renderTime();
   lcd.display();
-  digitalWrite(LCD_LIGHT_PIN, HIGH);
+  digitalWrite(LCD_LIGHT_PIN, LOW);
   displayOn = true;
 }
 
 void turnOffDisplay() {
-  digitalWrite(LCD_LIGHT_PIN, LOW);
+  digitalWrite(LCD_LIGHT_PIN, HIGH);
   lcd.noDisplay();
   displayOn = false;
 }
@@ -123,7 +123,8 @@ void setup() {
   pinMode(WIFI_ENABLE_PIN, OUTPUT);
 
   // Turn off the LCD backlight.
-  digitalWrite(LCD_LIGHT_PIN, LOW);
+  // (PNP Transistor)
+  digitalWrite(LCD_LIGHT_PIN, HIGH);
 
   // Turn off WiFi.
   digitalWrite(WIFI_ENABLE_PIN, LOW);
