@@ -40,6 +40,66 @@ LiquidCrystal_SR lcd(0,1,TWO_WIRE);
 //                   | \-- Clock Pin
 //                   \---- Data/Enable Pin
 
+byte eyeOpen[8] = {
+  B00000,
+  B01110,
+  B10001,
+  B10101,
+  B10001,
+  B01110,
+  B00000
+};
+
+byte eyeClose1[8] = {
+  B00000,
+  B01110,
+  B11111,
+  B10101,
+  B10001,
+  B01110,
+  B00000
+};
+
+byte eyeClose2[8] = {
+  B00000,
+  B01110,
+  B11111,
+  B11111,
+  B10001,
+  B01110,
+  B00000
+};
+
+byte eyeClose3[8] = {
+  B00000,
+  B01110,
+  B11111,
+  B11111,
+  B11111,
+  B01110,
+  B00000
+};
+
+byte smileLeft[8] = {
+  B00000,
+  B00000,
+  B01000,
+  B01000,
+  B00100,
+  B00011,
+  B00000
+};
+
+byte smileRight[8] = {
+  B00000,
+  B00000,
+  B00010,
+  B00010,
+  B00100,
+  B11000,
+  B00000
+};
+
 void renderTime() {
   unsigned int hr  = hour(time);
   unsigned int min = minute(time);
@@ -92,24 +152,20 @@ bool isDST() {
 }
 
 void createChars() {
-  byte i = 0;
-  byte dots[8] = {};
-  for (i = 0; i < 8; i++) {
-    dots[i] = B0;
-  }
-  for (i = 0; i < 5; i++) {
-    dots[0] = 1 << i;
-    lcd.createChar(i, dots);
-  }
+  lcd.createChar(0, eyeOpen);
+  lcd.createChar(1, eyeClose1);
+  lcd.createChar(2, eyeClose2);
+  lcd.createChar(3, eyeClose3);
+  lcd.createChar(4, smileLeft);
+  lcd.createChar(5, smileRight);
 }
 
 void loop() {
   if (displayOn) {
-    lcd.setCursor(0, 0);
-    for (byte i = 0; i < 16; i ++) {
-      lcd.write((displayChar + i) % 5);
-    }
-    displayChar = (displayChar + 1) % 5;
+    lcd.setCursor(14, 0);
+    lcd.write(displayChar);
+    lcd.write(displayChar);
+    displayChar = (displayChar + 1) % 4;
   } else {
     set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
     sleep_mode(); // System sleeps here
@@ -207,6 +263,10 @@ void setup() {
   sbi(TIMSK1, OCIE1A);
 
   createChars();
+
+  lcd.setCursor(14, 1);
+  lcd.write(4);
+  lcd.write(5);
 
   // Now that we're starting up, turn on Wifi
   digitalWrite(WIFI_ENABLE_PIN, HIGH);
