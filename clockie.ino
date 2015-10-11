@@ -32,6 +32,8 @@ volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
 volatile bool displayOn = false;
 
+byte displayChar = 0;
+
 // initialize the library with the numbers of the interface pins
 LiquidCrystal_SR lcd(0,1,TWO_WIRE);
 //                   | |
@@ -89,9 +91,29 @@ bool isDST() {
   return prevSun <= 0;
 }
 
+void createChars() {
+  byte i = 0;
+  byte dots[8] = {};
+  for (i = 0; i < 8; i++) {
+    dots[i] = B0;
+  }
+  for (i = 0; i < 5; i++) {
+    dots[0] = 1 << i;
+    lcd.createChar(i, dots);
+  }
+}
+
 void loop() {
-  set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
-  sleep_mode(); // System sleeps here
+  if (displayOn) {
+    lcd.setCursor(0, 0);
+    for (byte i = 0; i < 16; i ++) {
+      lcd.write((displayChar + i) % 5);
+    }
+    displayChar = (displayChar + 1) % 5;
+  } else {
+    set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
+    sleep_mode(); // System sleeps here
+  }
   if (showCounter > 0) {
     showCounter--;
     if (showCounter == 0) {
@@ -183,6 +205,8 @@ void setup() {
 
   // Enable Timer 1 compare interrupt
   sbi(TIMSK1, OCIE1A);
+
+  createChars();
 
   // Now that we're starting up, turn on Wifi
   digitalWrite(WIFI_ENABLE_PIN, HIGH);
