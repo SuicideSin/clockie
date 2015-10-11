@@ -42,6 +42,7 @@ LiquidCrystal_SR lcd(0,1,TWO_WIRE);
 
 byte eyeOpen[8] = {
   B00000,
+  B00000,
   B01110,
   B10001,
   B10101,
@@ -51,6 +52,7 @@ byte eyeOpen[8] = {
 };
 
 byte eyeClose1[8] = {
+  B00000,
   B00000,
   B01110,
   B11111,
@@ -62,6 +64,7 @@ byte eyeClose1[8] = {
 
 byte eyeClose2[8] = {
   B00000,
+  B00000,
   B01110,
   B11111,
   B11111,
@@ -71,6 +74,7 @@ byte eyeClose2[8] = {
 };
 
 byte eyeClose3[8] = {
+  B00000,
   B00000,
   B01110,
   B11111,
@@ -87,6 +91,7 @@ byte smileLeft[8] = {
   B01000,
   B00100,
   B00011,
+  B00000,
   B00000
 };
 
@@ -97,6 +102,7 @@ byte smileRight[8] = {
   B00010,
   B00100,
   B11000,
+  B00000,
   B00000
 };
 
@@ -162,10 +168,17 @@ void createChars() {
 
 void loop() {
   if (displayOn) {
-    lcd.setCursor(14, 0);
-    lcd.write(displayChar);
-    lcd.write(displayChar);
-    displayChar = (displayChar + 1) % 4;
+    displayChar++;
+    if (displayChar == 0) {
+      // blink
+      lcd.setCursor(14, 0);
+      lcd.write(3);
+      lcd.write(3);
+    } else if (displayChar == 1) {
+      lcd.setCursor(14, 0);
+      lcd.write((uint8_t)0);
+      lcd.write((uint8_t)0);
+    }
   } else {
     set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
     sleep_mode(); // System sleeps here
@@ -264,6 +277,10 @@ void setup() {
 
   createChars();
 
+  // Draw the smiley
+  lcd.setCursor(14, 0);
+  lcd.write((uint8_t)0);
+  lcd.write((uint8_t)0);
   lcd.setCursor(14, 1);
   lcd.write(4);
   lcd.write(5);
