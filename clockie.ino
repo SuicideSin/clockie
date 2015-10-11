@@ -6,13 +6,15 @@
 #include <avr/sleep.h>
 #include <LiquidCrystal_SR.h>
 
-#define DISPLAY_BUTTON_PIN 6
-#define SR_CLEAR_PIN       5
-#define LCD_LIGHT_PIN      2
-#define WIFI_ENABLE_PIN    3
+#define BUTTON_PIN_1    4
+#define BUTTON_PIN_2    6
+#define SR_CLEAR_PIN    5
+#define LCD_LIGHT_PIN   2
+#define WIFI_ENABLE_PIN 3
+#define ESP_CLOCK_PIN   8
+#define ESP_DATA_PIN    7
 
-#define CLOCK_PIN 8
-#define DATA_PIN  7
+#define SHOW_LCD_TIMEOUT 8
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -136,15 +138,17 @@ void setup() {
   // (Active LOW)
   digitalWrite(SR_CLEAR_PIN, HIGH);
 
-  // turn the button into a pullup,
-  // will trigger when it goes low
-  pinMode(DISPLAY_BUTTON_PIN, INPUT_PULLUP);
+  // turn the buttons into pullups,
+  // will trigger when they go low
+  pinMode(BUTTON_PIN_1, INPUT_PULLUP);
+  pinMode(BUTTON_PIN_2, INPUT_PULLUP);
 
   // turn 6 & 8 into inputs for the esp8266
-  pinMode(CLOCK_PIN, INPUT_PULLUP);
-  pinMode(DATA_PIN,  INPUT_PULLUP);
+  pinMode(ESP_CLOCK_PIN, INPUT_PULLUP);
+  pinMode(ESP_DATA_PIN,  INPUT_PULLUP);
 
-  // listen to pin changes on pin 6 (PCINT6)
+  // listen to pin changes on pin 4 and 6 (PCINT6)
+  sbi(PCMSK0, PCINT4);
   sbi(PCMSK0, PCINT6);
   // listen to pin changes on pin 8 (PCINT10)
   sbi(PCMSK1, PCINT10);
@@ -191,20 +195,23 @@ ISR(TIM1_COMPA_vect) {
 
 // buttons
 ISR(PCINT0_vect) {
-  if (digitalRead(DISPLAY_BUTTON_PIN) == LOW) {
-    showCounter = 5;
+  if (digitalRead(BUTTON_PIN_1) == LOW) {
+    showCounter = SHOW_LCD_TIMEOUT;
+  }
+  if (digitalRead(BUTTON_PIN_2) == LOW) {
+    showCounter = SHOW_LCD_TIMEOUT;
   }
 }
 
 // clock pin
 ISR(PCINT1_vect) {
   // only read when the clock is high
-  if (digitalRead(CLOCK_PIN) == HIGH) {
+  if (digitalRead(ESP_CLOCK_PIN) == HIGH) {
     lastTogglePin = time;
     if (clockPinCount == 0) {
       lastSetTime = 0;
     }
-    lastSetTime |= (unsigned long)(digitalRead(DATA_PIN)) << clockPinCount;
+    lastSetTime |= (unsigned long)(digitalRead(ESP_DATA_PIN)) << clockPinCount;
     clockPinCount++;
     if (clockPinCount == 32) {
       time = lastSetTime;
