@@ -152,7 +152,7 @@ byte medZ[8] = {
 };
 
 void renderTime() {
-  unsigned int hr  = hour(time);
+  unsigned int hr  = hourFormat12(time);
   unsigned int min = minute(time);
   unsigned int sec = second(time);
   lcd.setCursor(0, 1);
@@ -167,7 +167,7 @@ void renderTime() {
     lcd.print(0);
   }
   lcd.print(sec);
-  if (isAM()) {
+  if (isAM(time)) {
     lcd.print("AM");
   } else {
     lcd.print("PM");
@@ -314,8 +314,6 @@ void setup() {
   // Enable Timer 1 compare interrupt
   sbi(TIMSK1, OCIE1A);
 
-  hourFormat12();
-
   createChars();
 
   // Draw the smiley
@@ -356,8 +354,11 @@ ISR(PCINT1_vect) {
     lastSetTime |= (unsigned long)(digitalRead(ESP_DATA_PIN)) << clockPinCount;
     clockPinCount++;
     if (clockPinCount == 32) {
-      time = lastSetTime + timezoneOffset;
       clockPinCount = 0;
+      time = lastSetTime + timezoneOffset;
+      if (isDST()) {
+        time += 3600;
+      }
       // we have our time, turn off wifi
       digitalWrite(WIFI_ENABLE_PIN, LOW);
     }
