@@ -199,14 +199,6 @@ void loop() {
   // clear the clock pin counter
   if (lastTogglePin > 0 && lastTogglePin < time-2) {
     lastTogglePin = 0;
-    lcd.setCursor(0, 0);
-    if (clockPinCount == 0) {
-      lcd.print("S");
-      lcd.print(lastSetTime);
-    } else {
-      lcd.print(clockPinCount);
-    }
-    lcd.print("          ");
     clockPinCount = 0;
   }
 }
