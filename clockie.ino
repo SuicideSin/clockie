@@ -172,6 +172,9 @@ void renderTime() {
   } else {
     lcd.print("PM");
   }
+  if (hr < 10) {
+    lcd.print(' ');
+  }
 }
 
 void turnOnDisplay() {
