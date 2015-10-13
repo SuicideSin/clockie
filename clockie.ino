@@ -196,6 +196,13 @@ void renderTime() {
   lcd.print(sec);
 }
 
+void clearTime() {
+  // will need to force update next time
+  forceTimeDisplayUpdate = true;
+  lcd.setCursor(0, 1);
+  lcd.print("          ");
+}
+
 void turnOnDisplay() {
   digitalWrite(LCD_LIGHT_PIN, LOW);
   // clear the shift register
@@ -264,6 +271,7 @@ void loop() {
     if (showCounter > 0) {
       showCounter--;
       if (showCounter == 0) {
+        clearTime();
         turnOffDisplay();
       } else if (!displayOn) {
         turnOnDisplay();
