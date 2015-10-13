@@ -33,6 +33,7 @@ volatile time_t time = 0;
 volatile bool displayOn = false;
 volatile int timezoneOffset = -3600 * 8; // PST
 volatile bool forceTimeDisplayUpdate = true;
+volatile bool timeUpdated = false;
 
 byte displayChar = 0;
 
@@ -200,7 +201,6 @@ void turnOnDisplay() {
   // clear the shift register
   digitalWrite(SR_CLEAR_PIN, LOW);
   digitalWrite(SR_CLEAR_PIN, HIGH);
-  renderTime();
   lcd.display();
   displayOn = true;
 }
@@ -235,6 +235,16 @@ void createChars() {
 }
 
 void loop() {
+  if (!displayOn) {
+    set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
+    sleep_mode(); // System sleeps here
+  }
+
+  if (lastClockPinCount != clockPinCount) {
+    lastClockPinCount = clockPinCount;
+    return; // do nothing else, we're getting data
+  }
+
   if (displayOn) {
     displayChar++;
     if (displayChar == 0) {
@@ -247,24 +257,25 @@ void loop() {
       lcd.write((uint8_t)0);
       lcd.write((uint8_t)0);
     }
-  } else {
-    set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
-    sleep_mode(); // System sleeps here
   }
-  if (showCounter > 0) {
-    showCounter--;
-    if (showCounter == 0) {
-      turnOffDisplay();
-    } else if (!displayOn) {
-      turnOnDisplay();
+
+  if (timeUpdated) {
+    timeUpdated = false;
+    if (showCounter > 0) {
+      showCounter--;
+      if (showCounter == 0) {
+        turnOffDisplay();
+      } else if (!displayOn) {
+        turnOnDisplay();
+        forceTimeDisplayUpdate = true;
+      }
+    }
+    if (displayOn) {
+      renderTime();
     }
   }
-  if (lastClockPinCount != clockPinCount) {
-    lastClockPinCount = clockPinCount;
-  } else if (displayOn) {
-    renderTime();
-  }
-  // clear the clock pin counter
+
+  // clear the clock pin counter after 2 seconds
   if (lastTogglePin > 0 && lastTogglePin < time-2) {
     lastTogglePin = 0;
     clockPinCount = 0;
@@ -352,6 +363,7 @@ void setup() {
 // Timer 1 interrupt
 ISR(TIM1_COMPA_vect) {
   time++;
+  timeUpdated = true;
 }
 
 // buttons
