@@ -32,6 +32,7 @@ volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
 volatile bool displayOn = false;
 volatile int timezoneOffset = -3600 * 8; // PST
+volatile bool forceTimeDisplayUpdate = true;
 
 byte displayChar = 0;
 
@@ -155,26 +156,42 @@ void renderTime() {
   unsigned int hr  = hourFormat12(time);
   unsigned int min = minute(time);
   unsigned int sec = second(time);
-  lcd.setCursor(0, 1);
-  lcd.print(hr);
-  lcd.print(':');
-  if (min < 10) {
-    lcd.print(0);
+  unsigned int off = 0;
+  if (forceTimeDisplayUpdate ||
+      (sec == 0 && min == 0)) { // update hour
+    lcd.setCursor(0, 1);
+    lcd.print(hr);
+    lcd.print(':');
+
+    off = hr < 10 ? 7 : 8;
+    lcd.setCursor(off, 1);
+    if (isAM(time)) {
+      lcd.print("AM");
+    } else {
+      lcd.print("PM");
+    }
+    if (hr < 10) {
+      lcd.print(' ');
+    }
   }
-  lcd.print(min);
-  lcd.print(':');
+  if (forceTimeDisplayUpdate || (sec == 0)) {
+    off = hr < 10 ? 2 : 3;
+    lcd.setCursor(off, 1);
+    if (min < 10) {
+      lcd.print(0);
+    }
+    lcd.print(min);
+    lcd.print(':');
+  }
+
+  off = hr < 10 ? 5 : 6;
+  lcd.setCursor(off, 1);
   if (sec < 10) {
     lcd.print(0);
   }
   lcd.print(sec);
-  if (isAM(time)) {
-    lcd.print("AM");
-  } else {
-    lcd.print("PM");
-  }
-  if (hr < 10) {
-    lcd.print(' ');
-  }
+
+  forceTimeDisplayUpdate = false;
 }
 
 void turnOnDisplay() {
@@ -357,13 +374,14 @@ ISR(PCINT1_vect) {
     lastSetTime |= (unsigned long)(digitalRead(ESP_DATA_PIN)) << clockPinCount;
     clockPinCount++;
     if (clockPinCount == 32) {
-      clockPinCount = 0;
       time = lastSetTime + timezoneOffset;
       if (isDST()) {
         time += 3600;
       }
       // we have our time, turn off wifi
       digitalWrite(WIFI_ENABLE_PIN, LOW);
+      forceTimeDisplayUpdate = true;
+      clockPinCount = 0;
     }
   }
 }
