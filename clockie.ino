@@ -31,6 +31,7 @@ volatile time_t lastTogglePin = 0;
 volatile time_t lastSetTime = 0;
 volatile time_t time = 0;
 volatile bool displayOn = false;
+volatile int timezoneOffset = -3600 * 8; // PST
 
 byte displayChar = 0;
 
@@ -355,7 +356,7 @@ ISR(PCINT1_vect) {
     lastSetTime |= (unsigned long)(digitalRead(ESP_DATA_PIN)) << clockPinCount;
     clockPinCount++;
     if (clockPinCount == 32) {
-      time = lastSetTime;
+      time = lastSetTime + timezoneOffset;
       clockPinCount = 0;
       // we have our time, turn off wifi
       digitalWrite(WIFI_ENABLE_PIN, LOW);
