@@ -153,12 +153,15 @@ byte medZ[8] = {
 };
 
 void renderTime() {
+  // copy it here so we don't do a partial forced update
+  bool update = forceTimeDisplayUpdate;
+  forceTimeDisplayUpdate = false;
+
   unsigned int hr  = hourFormat12(time);
   unsigned int min = minute(time);
   unsigned int sec = second(time);
   unsigned int off = 0;
-  if (forceTimeDisplayUpdate ||
-      (sec == 0 && min == 0)) { // update hour
+  if (update || (sec == 0 && min == 0)) { // update hour
     lcd.setCursor(0, 1);
     lcd.print(hr);
     lcd.print(':');
@@ -174,7 +177,7 @@ void renderTime() {
       lcd.print(' ');
     }
   }
-  if (forceTimeDisplayUpdate || (sec == 0)) {
+  if (update || (sec == 0)) {
     off = hr < 10 ? 2 : 3;
     lcd.setCursor(off, 1);
     if (min < 10) {
@@ -190,8 +193,6 @@ void renderTime() {
     lcd.print(0);
   }
   lcd.print(sec);
-
-  forceTimeDisplayUpdate = false;
 }
 
 void turnOnDisplay() {
