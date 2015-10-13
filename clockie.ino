@@ -106,14 +106,55 @@ byte smileRight[8] = {
   B00000
 };
 
+byte sleepMouthLeft[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B00000,
+  B00000
+};
+
+byte sleepMouthRight[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B10100,
+  B11100
+};
+
+byte smallZ[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B01111,
+  B00010,
+  B00100,
+  B01111
+};
+
+byte medZ[8] = {
+  B00000,
+  B00000,
+  B11111,
+  B00010,
+  B00100,
+  B01000,
+  B11111,
+  B00000
+};
+
 void renderTime() {
   unsigned int hr  = hour(time);
   unsigned int min = minute(time);
   unsigned int sec = second(time);
   lcd.setCursor(0, 1);
-  if (hr < 10) {
-    lcd.print(0);
-  }
   lcd.print(hr);
   lcd.print(':');
   if (min < 10) {
@@ -125,6 +166,11 @@ void renderTime() {
     lcd.print(0);
   }
   lcd.print(sec);
+  if (isAM()) {
+    lcd.print("AM");
+  } else {
+    lcd.print("PM");
+  }
 }
 
 void turnOnDisplay() {
@@ -266,6 +312,8 @@ void setup() {
 
   // Enable Timer 1 compare interrupt
   sbi(TIMSK1, OCIE1A);
+
+  hourFormat12();
 
   createChars();
 
