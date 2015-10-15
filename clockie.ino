@@ -23,17 +23,51 @@
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 #endif
 
-unsigned int showCounter = 0;
+typedef enum {
+  QUIET_TIME,
+  LOCK,
+  RE_QUERY_TIME,
+  TZ_OFFSET,
+  BEDTIME,
+  WAKEUP_TIME,
+  DISPLAY_TIMEOUT
+} menuSelectionType;
 
-volatile unsigned int lastClockPinCount = 0;
-volatile unsigned int clockPinCount = 0;
-volatile time_t lastTogglePin = 0;
-volatile time_t lastSetTime = 0;
-volatile time_t time = 0;
+String menuStrings[7] {
+  "Quiet Time",
+  "Lock",
+  "Re-query Time",
+  "TZ Offset",
+  "Bedtime",
+  "Wakeup Time",
+  "Display Timeout"
+};
+
+// is the display on or not
 volatile bool displayOn = false;
-volatile int timezoneOffset = -3600 * 8; // PST
+// force update of the display
 volatile bool forceTimeDisplayUpdate = true;
+// is the menu active or not
+volatile bool menuActive = false;
+// has the timer interrupt incremented seconds
 volatile bool timeUpdated = false;
+// current menu selection
+volatile menuSelectionType menuSelection = QUIET_TIME;
+// how long before the screen turns off
+volatile unsigned int showCounter = 0;
+// number of clock pulses from the ESP8266
+// when this reaches 32 we have our timestamp
+volatile unsigned int clockPinCount = 0;
+// the last clock pulse count
+volatile unsigned int lastClockPinCount = 0;
+// last time we saw the clock pin toggle from the ESP8266
+volatile time_t lastTogglePin = 0;
+// timezone offset in seconds (defaults to PST)
+volatile int timezoneOffset = -3600 * 8;
+// the last time we got from the ESP8266/NTP in GMT
+volatile time_t lastSetTime = 0;
+// current time
+volatile time_t time = 0;
 
 byte displayChar = 0;
 
