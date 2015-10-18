@@ -31,9 +31,9 @@ void displayOffState();
 void timeDisplayState();
 void menuDisplayState();
 
-#define MENU_SIZE 7
+const byte menuSize = 7;
 
-String menuStrings[MENU_SIZE] {
+char *menuStrings[menuSize] {
   "Quiet Time",
   "Lock",
   "Re-query Time",
@@ -323,6 +323,9 @@ void menuDisplayState() {
   if (menuSelection != nextMenuSelection) {
     menuSelection = nextMenuSelection;
     lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print(menuSelection);
+    lcd.setCursor(0, 0);
     lcd.print(menuStrings[menuSelection]);
   }
   if (timeUpdated) {
@@ -435,7 +438,7 @@ ISR(PCINT0_vect) {
   bool butt2 = digitalRead(BUTTON_PIN_2);
   if (butt1 == LOW) {
     showCounter = SHOW_LCD_TIMEOUT;
-    nextMenuSelection = (nextMenuSelection + 1) % MENU_SIZE;
+    nextMenuSelection = (menuSelection + 1) % menuSize;
   }
   if (butt2 == LOW) {
     showCounter = SHOW_LCD_TIMEOUT;
