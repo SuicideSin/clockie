@@ -31,17 +31,9 @@ void displayOffState();
 void timeDisplayState();
 void menuDisplayState();
 
-typedef enum {
-  QUIET_TIME,
-  LOCK,
-  RE_QUERY_TIME,
-  TZ_OFFSET,
-  BEDTIME,
-  WAKEUP_TIME,
-  DISPLAY_TIMEOUT
-} menuSelectionType;
+#define MENU_SIZE 7
 
-String menuStrings[7] {
+String menuStrings[MENU_SIZE] {
   "Quiet Time",
   "Lock",
   "Re-query Time",
@@ -60,7 +52,9 @@ volatile bool menuActive = false;
 // has the timer interrupt incremented seconds
 volatile bool timeUpdated = false;
 // current menu selection
-volatile menuSelectionType menuSelection = QUIET_TIME;
+volatile byte menuSelection = 6;
+// next menu selection
+volatile byte nextMenuSelection = 0;
 // how long before the screen turns off
 volatile unsigned int showCounter = 0;
 // number of clock pulses from the ESP8266
@@ -296,7 +290,11 @@ void displayOffState() {
   if (showCounter > 0) {
     turnOnDisplay();
     forceDisplayUpdate = true;
-    currentStateAction = &timeDisplayState;
+    if (menuActive) {
+      currentStateAction = &menuDisplayState;
+    } else {
+      currentStateAction = &timeDisplayState;
+    }
   }
 }
 
@@ -316,10 +314,27 @@ void timeDisplayState() {
       currentStateAction = &displayOffState;
     }
   }
+  if (menuActive) {
+    currentStateAction = &menuDisplayState;
+  }
 }
 
 void menuDisplayState() {
-  // TODO
+  if (menuSelection != nextMenuSelection) {
+    menuSelection = nextMenuSelection;
+    lcd.clear();
+    lcd.print(menuStrings[menuSelection]);
+  }
+  if (timeUpdated) {
+    timeUpdated = false;
+    showCounter--;
+    if (showCounter == 0) {
+      menuActive = false;
+      lcd.clear();
+      turnOffDisplay();
+      currentStateAction = &displayOffState;
+    }
+  }
 }
 
 void loop() {
@@ -418,7 +433,11 @@ ISR(TIM1_COMPA_vect) {
 ISR(PCINT0_vect) {
   bool butt1 = digitalRead(BUTTON_PIN_1);
   bool butt2 = digitalRead(BUTTON_PIN_2);
-  if ((butt1 == LOW) || (butt2 == LOW)) {
+  if (butt1 == LOW) {
+    showCounter = SHOW_LCD_TIMEOUT;
+    nextMenuSelection = (nextMenuSelection + 1) % MENU_SIZE;
+  }
+  if (butt2 == LOW) {
     showCounter = SHOW_LCD_TIMEOUT;
   }
   if ((butt1 == LOW) && (butt2 == LOW)) {
