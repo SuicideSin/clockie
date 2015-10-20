@@ -51,6 +51,10 @@ volatile bool forceDisplayUpdate = true;
 volatile bool menuActive = false;
 // has the timer interrupt incremented seconds
 volatile bool timeUpdated = false;
+// if the menu select button is down
+volatile bool menuSelectDown = false;
+// if the menu action button is down
+volatile bool menuActionDown = false;
 // current menu selection
 volatile byte menuSelection = 6;
 // next menu selection
@@ -434,17 +438,26 @@ ISR(TIM1_COMPA_vect) {
 
 // buttons
 ISR(PCINT0_vect) {
-  bool butt1 = digitalRead(BUTTON_PIN_1);
-  bool butt2 = digitalRead(BUTTON_PIN_2);
-  if (butt1 == LOW) {
+  // active low
+  bool butt1 = !digitalRead(BUTTON_PIN_1);
+  bool butt2 = !digitalRead(BUTTON_PIN_2);
+
+  // select is only active if menu action is not
+  menuSelectDown = !butt1 && butt2;
+  // action is only active if menu select is not
+  menuActionDown = !butt2 && butt1;
+
+  // show the LCD if anything is pressed
+  if (butt1 || butt2) {
     showCounter = SHOW_LCD_TIMEOUT;
-    nextMenuSelection = (menuSelection + 1) % menuSize;
   }
-  if (butt2 == LOW) {
-    showCounter = SHOW_LCD_TIMEOUT;
-  }
-  if ((butt1 == LOW) && (butt2 == LOW)) {
+  // show the menu if both buttons are pressed
+  if (butt1 && butt2) {
     menuActive = true;
+  }
+  // go to the next menu item if we're active and select is pressed
+  if (menuActive && menuSelectDown) {
+    nextMenuSelection = (menuSelection + 1) % menuSize;
   }
 }
 
