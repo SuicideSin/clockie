@@ -90,39 +90,6 @@ byte eyeOpen[8] = {
   B00000
 };
 
-byte eyeClose1[8] = {
-  B00000,
-  B00000,
-  B01110,
-  B11111,
-  B10101,
-  B10001,
-  B01110,
-  B00000
-};
-
-byte eyeClose2[8] = {
-  B00000,
-  B00000,
-  B01110,
-  B11111,
-  B11111,
-  B10001,
-  B01110,
-  B00000
-};
-
-byte eyeClose3[8] = {
-  B00000,
-  B00000,
-  B01110,
-  B11111,
-  B11111,
-  B11111,
-  B01110,
-  B00000
-};
-
 byte smileLeft[8] = {
   B00000,
   B00000,
@@ -142,50 +109,6 @@ byte smileRight[8] = {
   B00100,
   B11000,
   B00000,
-  B00000
-};
-
-byte sleepMouthLeft[8] = {
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B11111,
-  B00000,
-  B00000
-};
-
-byte sleepMouthRight[8] = {
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B11111,
-  B10100,
-  B11100
-};
-
-byte smallZ[8] = {
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B01111,
-  B00010,
-  B00100,
-  B01111
-};
-
-byte medZ[8] = {
-  B00000,
-  B00000,
-  B11111,
-  B00010,
-  B00100,
-  B01000,
-  B11111,
   B00000
 };
 
@@ -316,11 +239,8 @@ bool isDST() {
 
 void createChars() {
   lcd.createChar(0, eyeOpen);
-  lcd.createChar(1, eyeClose1);
-  lcd.createChar(2, eyeClose2);
-  lcd.createChar(3, eyeClose3);
-  lcd.createChar(4, smileLeft);
-  lcd.createChar(5, smileRight);
+  lcd.createChar(1, smileLeft);
+  lcd.createChar(2, smileRight);
 }
 
 void _receiveDataState() {
@@ -469,8 +389,8 @@ void setup() {
   lcd.write((uint8_t)0);
   lcd.write((uint8_t)0);
   lcd.setCursor(14, 1);
-  lcd.write(4);
-  lcd.write(5);
+  lcd.write(1);
+  lcd.write(2);
 
   // Now that we're starting up, turn on Wifi
   digitalWrite(WIFI_ENABLE_PIN, HIGH);
