@@ -26,22 +26,22 @@
 typedef void (*stateAction)();
 stateAction currentStateAction;
 
-void receiveDataState();
-void displayOffState();
-void timeDisplayState();
-void menuDisplayState();
+void _receiveDataState();
+void _displayOffState();
+void _timeDisplayState();
+void _menuDisplayState();
+
+typedef enum { TIME, HOURS, MINUTES, SECONDS, ACTION } menuItemType;
+
+struct menuItem {
+  String       title;
+  int          value;
+  menuItemType type;
+};
 
 const byte menuSize = 7;
 
-char *menuStrings[menuSize] {
-  "Quiet Time",
-  "Lock",
-  "Re-query Time",
-  "TZ Offset",
-  "Bedtime",
-  "Wakeup Time",
-  "Display Timeout"
-};
+struct menuItem menu[menuSize];
 
 // is the display on or not
 volatile bool displayOn = false;
@@ -189,6 +189,34 @@ byte medZ[8] = {
   B00000
 };
 
+void setupMenu() {
+  menu[0].title = "Quiet Time";
+  menu[0].value = 60;
+  menu[0].type  = MINUTES;
+
+  menu[1].title = "Lock";
+  menu[1].type  = ACTION;
+
+  menu[2].title = "Re-query Time";
+  menu[2].type  = ACTION;
+
+  menu[3].title = "TZ Offset";
+  menu[3].value = -8;
+  menu[3].type  = HOURS;
+
+  menu[4].title = "Bedtime";
+  menu[4].value = 70200;         // 7:30 PM
+  menu[4].type  = TIME;
+
+  menu[5].title = "Wakeup Time";
+  menu[5].value = 23400;         // 6:30 AM
+  menu[5].type  = TIME;
+
+  menu[6].title = "Display Timeout";
+  menu[6].value = 10;
+  menu[6].type  = SECONDS;
+}
+
 void renderTime(bool force) {
   unsigned int hr  = hourFormat12(time);
   unsigned int min = minute(time);
@@ -235,6 +263,25 @@ void clearTime() {
   lcd.print("          ");
 }
 
+void renderMenu(menuItem item) {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(item.title);
+  lcd.setCursor(0, 1);
+  lcd.print("  ");
+  switch(item.type) {
+    case TIME:
+      break;
+    case HOURS:
+    case MINUTES:
+    case SECONDS:
+      lcd.print(item.value);
+      break;
+    case ACTION:
+      lcd.print("[OK]");
+  }
+}
+
 void turnOnDisplay() {
   digitalWrite(LCD_LIGHT_PIN, LOW);
   // clear the shift register
@@ -273,7 +320,7 @@ void createChars() {
   lcd.createChar(5, smileRight);
 }
 
-void receiveDataState() {
+void _receiveDataState() {
   // clear the clock pin counter after 2 seconds
   if (lastTogglePin > 0 && lastTogglePin < time-2) {
     lastTogglePin = 0;
@@ -283,11 +330,11 @@ void receiveDataState() {
     // show what we got
     turnOnDisplay();
     forceDisplayUpdate = true;
-    currentStateAction = &timeDisplayState;
+    currentStateAction = &_timeDisplayState;
   }
 }
 
-void displayOffState() {
+void _displayOffState() {
   set_sleep_mode(SLEEP_MODE_IDLE); // Set sleep mode as idle
   sleep_mode(); // System sleeps here
 
@@ -295,14 +342,14 @@ void displayOffState() {
     turnOnDisplay();
     forceDisplayUpdate = true;
     if (menuActive) {
-      currentStateAction = &menuDisplayState;
+      currentStateAction = &_menuDisplayState;
     } else {
-      currentStateAction = &timeDisplayState;
+      currentStateAction = &_timeDisplayState;
     }
   }
 }
 
-void timeDisplayState() {
+void _timeDisplayState() {
   if (forceDisplayUpdate) {
     forceDisplayUpdate = false;
     renderTime(true);
@@ -315,22 +362,18 @@ void timeDisplayState() {
     if (showCounter == 0) {
       clearTime();
       turnOffDisplay();
-      currentStateAction = &displayOffState;
+      currentStateAction = &_displayOffState;
     }
   }
   if (menuActive) {
-    currentStateAction = &menuDisplayState;
+    currentStateAction = &_menuDisplayState;
   }
 }
 
-void menuDisplayState() {
+void _menuDisplayState() {
   if (menuSelection != nextMenuSelection) {
     menuSelection = nextMenuSelection;
-    lcd.clear();
-    lcd.setCursor(0, 1);
-    lcd.print(menuSelection);
-    lcd.setCursor(0, 0);
-    lcd.print(menuStrings[menuSelection]);
+    renderMenu(menu[menuSelection]);
   }
   if (timeUpdated) {
     timeUpdated = false;
@@ -339,7 +382,7 @@ void menuDisplayState() {
       menuActive = false;
       lcd.clear();
       turnOffDisplay();
-      currentStateAction = &displayOffState;
+      currentStateAction = &_displayOffState;
     }
   }
 }
@@ -350,6 +393,9 @@ void loop() {
 }
 
 void setup() {
+  // generate the menu
+  setupMenu();
+
   // Set the LCD display backlight, WiFi Enable
   // and Shift Register pins as outputs.
   pinMode(LCD_LIGHT_PIN,   OUTPUT);
@@ -427,7 +473,7 @@ void setup() {
   digitalWrite(WIFI_ENABLE_PIN, HIGH);
 
   // Start with the display on
-  currentStateAction = &timeDisplayState;
+  currentStateAction = &_timeDisplayState;
 }
 
 // Timer 1 interrupt
@@ -443,9 +489,9 @@ ISR(PCINT0_vect) {
   bool butt2 = !digitalRead(BUTTON_PIN_2);
 
   // select is only active if menu action is not
-  menuSelectDown = !butt1 && butt2;
+  menuSelectDown = !butt1 &&  butt2;
   // action is only active if menu select is not
-  menuActionDown = !butt2 && butt1;
+  menuActionDown =  butt1 && !butt2;
 
   // show the LCD if anything is pressed
   if (butt1 || butt2) {
@@ -468,7 +514,7 @@ ISR(PCINT1_vect) {
     lastTogglePin = time;
     if (clockPinCount == 0) {
       lastSetTime = 0;
-      currentStateAction = &receiveDataState;
+      currentStateAction = &_receiveDataState;
     }
     lastSetTime |= (unsigned long)(digitalRead(ESP_DATA_PIN)) << clockPinCount;
     clockPinCount++;
