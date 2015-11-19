@@ -205,11 +205,11 @@ void setupMenu() {
   menu[3].type  = HOURS;
 
   menu[4].title = "Bedtime";
-  menu[4].value = 70200;         // 7:30 PM
+  menu[4].value = 1170;          // 7:30 PM, in minutes
   menu[4].type  = TIME;
 
   menu[5].title = "Wakeup Time";
-  menu[5].value = 23400;         // 6:30 AM
+  menu[5].value = 390;           // 6:30 AM, in minutes
   menu[5].type  = TIME;
 
   menu[6].title = "Display Timeout";
@@ -217,7 +217,7 @@ void setupMenu() {
   menu[6].type  = SECONDS;
 }
 
-void renderTime(bool force) {
+void renderTime(time_t time, bool force) {
   unsigned int hr  = hourFormat12(time);
   unsigned int min = minute(time);
   unsigned int sec = second(time);
@@ -271,6 +271,9 @@ void renderMenu(menuItem item) {
   lcd.print("  ");
   switch(item.type) {
     case TIME:
+      // TIME is stored in minutes
+      // * 60 to get it in seconds
+      renderTime(item.value * 60, true);
       break;
     case HOURS:
     case MINUTES:
@@ -352,11 +355,11 @@ void _displayOffState() {
 void _timeDisplayState() {
   if (forceDisplayUpdate) {
     forceDisplayUpdate = false;
-    renderTime(true);
+    renderTime(time, true);
   }
   if (timeUpdated) {
     timeUpdated = false;
-    renderTime(false);
+    renderTime(time, false);
 
     showCounter--;
     if (showCounter == 0) {
