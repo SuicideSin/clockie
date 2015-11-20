@@ -118,9 +118,11 @@ void setupMenu() {
   menu[0].type  = MINUTES;
 
   menu[1].title = "Lock";
+  menu[1].value = 0;
   menu[1].type  = ACTION;
 
   menu[2].title = "Re-query Time";
+  menu[2].value = 1;
   menu[2].type  = ACTION;
 
   menu[3].title = "TZ Offset";
@@ -186,17 +188,22 @@ void clearTime() {
   lcd.print("          ");
 }
 
-void renderMenu(menuItem item) {
-  lcd.clear();
+void renderMenuTitle(menuItem item) {
   lcd.setCursor(0, 0);
   lcd.print(item.title);
+}
+
+void renderMenuValue(menuItem item) {
+  lcd.setCursor(0, 1);
+  lcd.print("                ");
   lcd.setCursor(0, 1);
   lcd.print("  ");
   switch(item.type) {
     case TIME:
       // TIME is stored in minutes
       // * 60 to get it in seconds
-      renderTime(item.value * 60, true);
+      // long so it won't overflow
+      renderTime(item.value * 60l, true);
       break;
     case HOURS:
     case MINUTES:
@@ -206,6 +213,46 @@ void renderMenu(menuItem item) {
     case ACTION:
       lcd.print("[OK]");
   }
+}
+
+bool activateMenuItem() {
+  menuItem* item = &menu[menuSelection];
+  switch(item->type) {
+    case TIME:
+      // increment 15 min
+      item->value += 15;
+      // wrap after 24 hours
+      if (item->value > 1440) {
+        item->value -= 1440;
+      }
+      break;
+    case HOURS:
+      item->value += 1;
+      if (item->value > 12) {
+        item->value = -12;
+      }
+      break;
+    case MINUTES:
+      item->value += 5;
+      if (item->value > 150) {
+        item->value = 5;
+      }
+      break;
+    case SECONDS:
+      item->value += 1;
+      if (item->value > 30) {
+        item->value = 1;
+      }
+      break;
+    case ACTION:
+      if (item->value == 0) {        // Lock
+      } else if (item->value == 1) { // Re-query time
+        digitalWrite(WIFI_ENABLE_PIN, HIGH);
+      }
+      return true;
+      break;
+  }
+  return false;
 }
 
 void turnOnDisplay() {
@@ -294,9 +341,24 @@ void _timeDisplayState() {
 }
 
 void _menuDisplayState() {
-  if (menuSelection != nextMenuSelection) {
+  if (forceDisplayUpdate ||
+      (menuSelection != nextMenuSelection)) {
     menuSelection = nextMenuSelection;
-    renderMenu(menu[menuSelection]);
+    lcd.clear();
+    renderMenuTitle(menu[menuSelection]);
+    renderMenuValue(menu[menuSelection]);
+  }
+  if (menuActionDown) {
+    if (activateMenuItem()) {
+      // action running
+      showCounter = 0;
+      menuActive = false;
+      lcd.clear();
+      turnOffDisplay();
+      currentStateAction = &_displayOffState;
+    } else {
+      renderMenuValue(menu[menuSelection]);
+    }
   }
   if (timeUpdated) {
     timeUpdated = false;
