@@ -34,7 +34,7 @@ void _menuDisplayState();
 typedef enum { TIME, HOURS, MINUTES, SECONDS, ACTION } menuItemType;
 
 struct menuItem {
-  String       title;
+  const char*  title;
   int          value;
   menuItemType type;
 };
