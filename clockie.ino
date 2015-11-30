@@ -403,7 +403,7 @@ void setup() {
   pinMode(BUTTON_PIN_1, INPUT_PULLUP);
   pinMode(BUTTON_PIN_2, INPUT_PULLUP);
 
-  // turn 6 & 8 into inputs for the esp8266
+  // turn 7 & 8 into inputs for the esp8266
   pinMode(ESP_CLOCK_PIN, INPUT_PULLUP);
   pinMode(ESP_DATA_PIN,  INPUT_PULLUP);
 
