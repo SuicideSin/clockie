@@ -114,16 +114,16 @@ byte smileRight[8] = {
 
 void setupMenu() {
   menu[0].title = "Quiet Time";
-  menu[0].value = 60;
-  menu[0].type  = MINUTES;
+  menu[0].value = 0;
+  menu[0].type  = ACTION;
 
-  menu[1].title = "Lock";
-  menu[1].value = 0;
+  menu[1].title = "Re-query Time";
+  menu[1].value = 1;
   menu[1].type  = ACTION;
 
-  menu[2].title = "Re-query Time";
-  menu[2].value = 1;
-  menu[2].type  = ACTION;
+  menu[2].title = "Quiet Timeout";
+  menu[2].value = 60;
+  menu[2].type  = MINUTES;
 
   menu[3].title = "TZ Offset";
   menu[3].value = -8;
@@ -245,7 +245,7 @@ bool activateMenuItem() {
       }
       break;
     case ACTION:
-      if (item->value == 0) {        // Lock
+      if (item->value == 0) {        // Quiet Time
       } else if (item->value == 1) { // Re-query time
         digitalWrite(WIFI_ENABLE_PIN, HIGH);
       }
